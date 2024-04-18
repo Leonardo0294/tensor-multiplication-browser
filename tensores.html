@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multiplicación de Tensores en Navegador</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+</head>                                                                                                        
+<body>
+    <h1>Multiplicación de Tensores en Navegador</h1>
+
+    <script>
+        async function multiplyTensorsUntilSizeLimit() {
+            const sizeLimitMB = 16; // Nuevo límite de tamaño del tensor en MB
+            let tensorA = tf.randomUniform([10, 10], 1, 10, 'int32'); // Tensor A con valores del 1 al 9
+            let tensorB = tf.randomUniform([10, 10], 1, 10, 'int32'); // Tensor B con valores del 1 al 9
+            let resultTensor = tensorA;
+            let totalSizeMB = tensorA.size * 4 / (1024 * 1024); // Calcula el tamaño inicial en MB
+            let iteration = 1;
+
+            // Multiplicar los tensores entre sí hasta que el tamaño supere el nuevo límite
+            while (totalSizeMB <= sizeLimitMB) {
+                resultTensor = tf.matMul(resultTensor, tensorB);
+                totalSizeMB = resultTensor.size * 4 / (1024 * 1024); // Calcula el nuevo tamaño en MB
+
+                // Mostrar progreso en la consola cada 10 iteraciones
+                if (iteration % 10 === 0) {
+                    console.log(`Iteración ${iteration}: Tamaño del tensor = ${totalSizeMB.toFixed(2)} MB`);
+                }
+
+                iteration++;
+                await tf.nextFrame(); // Permitir que el navegador actualice la interfaz durante el bucle
+            }
+
+            // Imprimir el resultado final en la consola
+            const resultArray = await resultTensor.array();
+            console.log('Resultado del tensor:');
+            console.log(resultArray);
+
+            // Liberar memoria
+            tensorA.dispose();
+            tensorB.dispose();
+            resultTensor.dispose();
+        }
+
+        // Llamar a la función principal al cargar la página
+        multiplyTensorsUntilSizeLimit();
+    </script>
+</body>
+</html>
