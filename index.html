@@ -3,46 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <title>Multiplicación de Tensores en Navegador</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa; /* Color de fondo gris claro */
-            color: #333; /* Color de texto principal */
-            padding: 20px;
-            text-align: center;
-        }
-
-        h1 {
-            color: #007bff; /* Azul brillante para el título */
-        }
-
-        p {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #28a745; /* Verde */
-            color: #fff; /* Texto blanco */
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #218838; /* Verde más oscuro al pasar el ratón */
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="index.js"></script>
+    <link rel="stylesheet" href="styles.css"> <!-- Enlace al archivo CSS -->
 </head>
 <body>
     <h1>Multiplicación de Tensores en Navegador</h1>
-    <p></p>
-    <button id="calculate-btn">INICIAR</button>
-    <script src="index.js"></script>
+    <p>Ver los resultados en la consola del navegador</p>
+    <div class="console-container">
+        <div class="console-message" id="consoleOutput">
+            <!-- Este contenedor mostrará los mensajes de la consola -->
+        </div>
+    </div>
 </body>
 </html>

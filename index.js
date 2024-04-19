@@ -1,67 +1,71 @@
-// Función para generar un número aleatorio entre 1 y 'n'
-const randomNumber = (n) => Math.floor(Math.random() * (n)) + 1;
+// Definir una matriz vacía
+const matrix = [];
 
-// Selección del botón de cálculo por su ID
-const calculateButton = document.querySelector("#calculate-btn");
-
-// Función para convertir megabytes a bytes
-const megabytesToBytes = (megabytes) => megabytes * 1e+6;
-
-// Función para convertir bytes a megabytes
-const bytesToMegabytes = (bytes) => bytes / 1e+6;
-
-// Tamaño de un float32 en bytes.
-const FLOAT_32_SIZE = 4;
-
-// Función para calcular el tamaño en bytes de un tensor 2D
-const getTensor2dByteSize = (tensor) => {
-    const [x, y] = tensor.shape;
-    return x * y * (FLOAT_32_SIZE);
+// Crear una matriz 10x10 con números del 1 al 10
+for (let i = 0; i < 10; i++) {
+    let row = [];
+    for (let j = 0; j < 10; j++) {
+        // Agregar números del 1 al 10 a cada fila de la matriz
+        if (j + 1 === 10) {
+            row.push(1); // Si j+1 es igual a 10, agregar 1 en lugar de 10
+        } else {
+            row.push(j + 1); // Agregar el número actual (j + 1)
+        }
+    }
+    matrix.push(row); // Agregar la fila a la matriz
 }
 
-// Constante que representa 64 megabytes en bytes
-const SIXTY_FOUR_MB_BYTES = megabytesToBytes(64);
+// Función asincrónica para verificar el uso de memoria
+async function memoryVerify() {
+    const bytesMaxSize = 64 * 1024 * 1024; // Tamaño máximo de memoria en bytes (64 MB)
 
-// Event Listener para el botón de cálculo
-calculateButton.addEventListener('click', () => {
-    // Realizar operaciones dentro de tf.tidy() para liberar memoria
-    tf.tidy(() => {
-        // Crear matrices de números aleatorios para los tensores A y B
-        const arrA = Array.from({ length: 100 * 100 }).map(() => randomNumber(9));
-        const arrB = Array.from({ length: 100 * 100 }).map(() => randomNumber(9));
-        
-        // Crear tensores 2D a partir de las matrices
-        let tensorA = tf.tensor2d(arrA, [100, 100]);
-        const tensorB = tf.tensor2d(arrB, [100, 100]);
+    // Inicializar tensores con la matriz creada
+    let tensor1 = tf.tensor2d(matrix);
+    let tensor2 = tf.tensor2d(matrix);
+    let finalTensor = tf.tensor2d(matrix);
 
-        // Imprimir los valores de los tensores A y B en la consola
-        tensorA.print();
-        tensorB.print();
-        let tensorQuantity = 2;
+    let firstTensor = true; // Variable para alternar entre tensores en cada iteración
 
-        // Realizar bucle mientras el tamaño del tensorA sea menor que 64 MB en bytes
-        while (getTensor2dByteSize(tensorA) < SIXTY_FOUR_MB_BYTES) {
-            // Concatenar tensorA con tensorB
-            const prod = tensorA.concat(tensorB);
+    console.log('Inicio de la verificación de memoria...'); // Mensaje de inicio
 
-            // Liberar memoria del tensorA original y asignar el nuevo tensor concatenado
-            tensorA.dispose();
-            tensorA = prod;
-
-            // Incrementar la cantidad de tensores
-            tensorQuantity += 1;
-
-            // Calcular y mostrar el tamaño del tensorA en bytes y megabytes en la consola
-            const bytes = getTensor2dByteSize(tensorA);
-            console.log("Tamaño de tensorA: (bytes)", bytes);
-            console.log("Tamaño de tensorA: (megabytes)", bytesToMegabytes(bytes));
+    // Bucle infinito para realizar operaciones y monitorear la memoria
+    while (true) {
+        if (firstTensor) {
+            // En la primera iteración, multiplicar el tensor final por tensor1 y actualizar tensor1
+            finalTensor = finalTensor.mul(tensor1);
+            tensor1 = tensor1.mul(tensor2);
+        } else {
+            // En las iteraciones subsiguientes, multiplicar el tensor final por tensor2 y actualizar tensor2
+            finalTensor = finalTensor.mul(tensor2);
+            tensor2 = tensor1.mul(tensor1);
         }
 
-        // Mostrar el tamaño final de tensorA y la cantidad total de tensores creados
-        console.log("Tamaño final de tensorA: ", getTensor2dByteSize(tensorA));
-        console.log("Cantidad de tensores: ", tensorQuantity);
-    });
+        // Obtener el estado de la memoria actual
+        const tensorMemory = tf.memory();
+        const memoryInMB = tensorMemory.numBytes / (1024 * 1024); // Convertir bytes a megabytes
+        const consoleMsg = `Uso de memoria: ${memoryInMB.toFixed(2)} MB`; // Crear mensaje de uso de memoria
 
-    // Mostrar la cantidad de tensores actualmente en memoria en la consola
-    console.log("Cantidad de tensores en memoria: ", tf.memory().numTensors);
-});
+        console.log(consoleMsg); // Mostrar mensaje de uso de memoria en la consola
+
+        // Verificar si se superó el límite máximo de memoria
+        if (tensorMemory.numBytes > bytesMaxSize) {
+            console.log('Límite de 64MB alcanzado.'); // Mostrar mensaje de límite alcanzado
+            console.log('Tensor final:');
+            console.log(finalTensor.toString()); // Mostrar el tensor final como cadena
+            finalTensor.print(); // Imprimir el tensor final en la consola
+
+            // Liberar memoria al eliminar los tensores
+            tensor1.dispose();
+            tensor2.dispose();
+            finalTensor.dispose();
+
+            break; // Salir del bucle
+        }
+
+        firstTensor = !firstTensor; // Alternar entre tensores en cada iteración
+
+        await new Promise(resolve => setTimeout(resolve, 1)); // Esperar 1 milisegundo antes de la siguiente iteración
+    }
+}
+
+memoryVerify(); // Llamar a la función para iniciar la verificación de memoria
